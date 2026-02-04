@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparateur de Transcription (Japonais)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">Transcription Audio Benchmark</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <label class="block mb-2 text-sm font-medium text-gray-900">Uploader un fichier audio (mp3, wav, m4a)</label>
+            <input type="file" id="audioFile" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none p-2">
+            <button onclick="uploadAndTranscribe()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Lancer la transcription
+            </button>
+            <div id="loading" class="hidden mt-4 text-center text-gray-600">
+                <p class="animate-pulse">Analyse en cours... (Cela peut prendre du temps sur Render)</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-yellow-400">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    Google Web Speech
+                    <span class="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Rapide</span>
+                </h2>
+                <div id="googleResult" class="text-gray-700 whitespace-pre-wrap min-h-[100px]">En attente...</div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    OpenAI Whisper (Local)
+                    <span class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Précis</span>
+                </h2>
+                <div id="whisperResult" class="text-gray-700 whitespace-pre-wrap min-h-[100px]">En attente...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function uploadAndTranscribe() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            if (!file) return alert("Veuillez sélectionner un fichier.");
+
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('googleResult').innerText = "Traitement...";
+            document.getElementById('whisperResult').innerText = "Traitement...";
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                document.getElementById('googleResult').innerText = data.google || "Pas de résultat";
+                document.getElementById('whisperResult').innerText = data.whisper || "Pas de résultat";
+            } catch (error) {
+                alert("Erreur lors de la transcription");
+                console.error(error);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
